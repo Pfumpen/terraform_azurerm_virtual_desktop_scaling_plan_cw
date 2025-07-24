@@ -1,11 +1,14 @@
 **Role:** You are a Prompt Engineer and expert in Azure Terraform Best Practices with a deep understanding of the provided Azure Code Guidelines. Your task is to generate a highly specific and detailed prompt for another AI, which will then create an Azure Terraform module.
 
-**Task:** Create a detailed prompt for generating an Azure Terraform module for `{Module Name}` (e.g., "Azure SQL Server", "Azure Storage Account"). This generated prompt *must* exactly follow the structure of the "Azure Terraform Module AI Prompt Template" referenced below and reflect the requirements from the provided Azure Code Guidelines.
+**Task:** Create a detailed prompt for generating an Azure Terraform module for `Virtual_desktop_scaling_plan` (e.g., "Azure SQL Server", "Azure Storage Account"). This generated prompt *must* exactly follow the structure of the "Azure Terraform Module AI Prompt Template" referenced below and reflect the requirements from the provided Azure Code Guidelines.
 
 **Context & Inputs for Your Analysis:**
 
-1.  **Target Module:** `{Module Name}` - The Terraform module that should ultimately be created.
-2.  **Relevant Azure Resources:** `{List of primary AzureRM resources for this module, e.g., azurerm_storage_account, azurerm_storage_container, azurerm_private_endpoint}`. Analyze the official Terraform Registry documentation for *these specific resources* to understand arguments, attributes, and valid values.
+1.  **Target Module:** `Virtual_desktop_scaling_plan` - The Terraform module that should ultimately be created.
+2.  **Relevant Azure Resources:** `virtual_desktop_scaling_plan\monitor_diagnostic_setting.md
+virtual_desktop_scaling_plan\role_assignment.md
+virtual_desktop_scaling_plan\virtual_desktop_scaling_plan_host_pool_association.md
+virtual_desktop_scaling_plan\virtual_desktop_scaling_plan.md`. Analyze the official Terraform Registry documentation for *these specific resources* to understand arguments, attributes, and valid values.
 3.  **Azure Code Guidelines:** You have access to the comprehensive "Azure Terraform Module Code Guidelines" (provided in previous exchanges). Analyze these *carefully* and derive the specific requirements for the prompt to be generated. Pay particular attention to:
     *   **Module Structure:** File organization (1.1, 1.2), `main.tf` pattern.
     *   **Variable Management:** Definitions (2.1), complex types (2.2 `object`, `optional`, Maps), *comprehensive validation* (2.3, all sub-points, including splitting validations for complex types as per 2.4.1), Nullable (2.5), Ephemeral (2.6), Sensitive (2.7).
@@ -17,8 +20,11 @@
 
 **Your Instructions for Creating the Prompt:**
 
-1.  **Analyze:** Combine your knowledge from the Terraform Registry documentation for the mentioned `{List of primary AzureRM resources...}` with the detailed requirements from the provided "Azure Code Guidelines".
-2.  **Identify & Derive:** Based on your analysis, determine for the `{Module Name}`:
+1.  **Analyze:** Combine your knowledge from the Terraform Registry documentation for the mentioned `virtual_desktop_scaling_plan\monitor_diagnostic_setting.md
+virtual_desktop_scaling_plan\role_assignment.md
+virtual_desktop_scaling_plan\virtual_desktop_scaling_plan_host_pool_association.md
+virtual_desktop_scaling_plan\virtual_desktop_scaling_plan.md` with the detailed requirements from the provided "Azure Code Guidelines".
+2.  **Identify & Derive:** Based on your analysis, determine for the `Virtual_desktop_scaling_plan`:
     *   The exact `RESOURCE TYPE`.
     *   The core `FUNCTIONS` and typical configuration options (including advanced functions like Diagnostics, RBAC, Private Endpoints, CMK, if relevant, following patterns in Guideline 5.x).
     *   Standard `DEPENDENCIES` (possibly VNet, KeyVault, Log Analytics Workspace).
@@ -35,10 +41,5 @@
 
 **Output:**
 
-Please provide the **full text of the generated prompt**. This prompt must exactly follow the structure of the "AI Prompt Template" and be filled with the derived, specific information and requirements for the `{Module Name}` module, based on your analysis of the Terraform Registry Docs and the provided Azure Code Guidelines.
+Please provide the **full text of the generated prompt**. This prompt must exactly follow the structure of the "AI Prompt Template" and be filled with the derived, specific information and requirements for the `Virtual_desktop_scaling_plan` module, based on your analysis of the Terraform Registry Docs and the provided Azure Code Guidelines.
 
----
-**(Replace Placeholders!)** Before using this prompt, replace:
-*   `{Module Name}`: With the name of the module to be created (e.g., `Azure SQL Server`, `Azure Storage Account`).
-*   `{List of primary AzureRM resources...}`: With the specific `azurerm_...` resource names (e.g., `azurerm_storage_account`, `azurerm_storage_container`).
----
