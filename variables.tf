@@ -21,13 +21,6 @@ variable "location" {
   type        = string
   description = "(Required) The Azure region for deployment. This is a preview feature and may only be available in specific regions."
 
-  validation {
-    # As of late 2023, these are the common regions supporting the feature.
-    # A definitive list is hard to maintain, so this is a best-effort validation.
-    # Users can bypass this if a new region is added by Azure.
-    condition     = contains(["eastus", "eastus2", "westus", "westus2", "westus3", "northcentralus", "southcentralus", "westeurope", "northeurope", "uksouth", "ukwest"], lower(var.location))
-    error_message = "The specified location may not support Virtual Desktop Scaling Plans, which is a preview feature. Common supported regions are East US, West US, North Europe, and West Europe."
-  }
 }
 
 variable "friendly_name" {
@@ -215,23 +208,49 @@ variable "host_pool_associations" {
 }
 
 #------------------------------------------------------------------------------
-# Diagnostic Settings Variable
+# Diagnostic Settings Variables
 #------------------------------------------------------------------------------
 
+variable "diagnostics_level" {
+  description = "Defines the detail level for diagnostics. Possible values: 'none', 'basic', 'custom'."
+  type        = string
+  default     = "basic"
+  validation {
+    condition     = contains(["none", "basic", "custom"], var.diagnostics_level)
+    error_message = "Valid values for diagnostics_level are 'none', 'basic', or 'custom'."
+  }
+}
+
 variable "diagnostic_settings" {
+  description = "A map containing the destination IDs for diagnostic settings. When diagnostics are enabled, exactly one destination must be specified."
   type = object({
-    enabled                        = optional(bool, false)
-    name                           = optional(string, null)
     log_analytics_workspace_id     = optional(string)
     eventhub_authorization_rule_id = optional(string)
     storage_account_id             = optional(string)
-    log_categories                 = optional(list(string), [])
-    metric_categories              = optional(list(string), [])
   })
-  description = "(Optional) An object to configure diagnostic settings for the scaling plan."
-  default = {
-    enabled = false
+  default = {}
+
+  validation {
+    # This rule ensures that if diagnostics are enabled, the user provides exactly one valid destination.
+    condition = var.diagnostics_level == "none" || (
+      (try(var.diagnostic_settings.log_analytics_workspace_id, null) != null ? 1 : 0) +
+      (try(var.diagnostic_settings.eventhub_authorization_rule_id, null) != null ? 1 : 0) +
+      (try(var.diagnostic_settings.storage_account_id, null) != null ? 1 : 0) == 1
+    )
+    error_message = "When 'diagnostics_level' is not 'none', exactly one of 'log_analytics_workspace_id', 'eventhub_authorization_rule_id', or 'storage_account_id' must be specified in the 'diagnostic_settings' object."
   }
+}
+
+variable "diagnostics_custom_logs" {
+  description = "A list of log categories to enable when diagnostics_level is 'custom'."
+  type        = list(string)
+  default     = []
+}
+
+variable "diagnostics_custom_metrics" {
+  description = "A list of metric categories to enable when diagnostics_level is 'custom'. Use ['AllMetrics'] for all."
+  type        = list(string)
+  default     = []
 }
 
 #------------------------------------------------------------------------------

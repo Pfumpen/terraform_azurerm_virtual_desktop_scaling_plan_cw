@@ -54,7 +54,10 @@ This module relies on the following external resources, which you must provide v
 | `tags`                | A map of tags to apply to the scaling plan resource.                                                    | `map(string)` | `{}`    | no       |
 | `schedules`           | A map of schedule configurations for the scaling plan (see structure below).                            | `map(object)` | n/a     | yes      |
 | `host_pool_associations` | A map to associate host pools with this scaling plan (see structure below).                            | `map(object)` | `{}`    | no       |
-| `diagnostic_settings` | An object to configure diagnostic settings for the scaling plan (see structure below).                  | `object`    | `null`  | no       |
+| `diagnostics_level` | Defines the detail level for diagnostics. Possible values: 'none', 'basic', 'custom'. | `string` | `"basic"` | no |
+| `diagnostic_settings` | A map containing the destination IDs for diagnostic settings. When diagnostics are enabled, exactly one destination must be specified. | `object` | `{}` | no |
+| `diagnostics_custom_logs` | A list of log categories to enable when `diagnostics_level` is 'custom'. | `list(string)` | `[]` | no |
+| `diagnostics_custom_metrics` | A list of metric categories to enable when `diagnostics_level` is 'custom'. | `list(string)` | `[]` | no |
 | `role_assignments`    | A map of role assignments to create on the scaling plan's scope (see structure below).                  | `map(object)` | `{}`    | no       |
 
 ---
@@ -139,29 +142,39 @@ host_pool_associations = {
 
 ### `diagnostic_settings`
 
-This variable configures the diagnostic settings to send logs and metrics to a specified destination.
+This variable configures the destination for diagnostic logs. It follows a structured pattern where you define the level of diagnostics and then provide exactly one destination.
 
-**Type:**
+**`diagnostics_level`:**
+*   **`none`**: (Default) Disables diagnostic settings.
+*   **`basic`**: Enables a predefined set of logs (`Autoscale`) and sends them to the specified destination.
+*   **`custom`**: Enables logs and metrics specified in the `diagnostics_custom_logs` and `diagnostics_custom_metrics` variables.
+
+**`diagnostic_settings` object Type:**
 ```hcl
 object({
-  enabled                       = optional(bool, true)
-  name                          = optional(string, "diag-${var.name}")
-  log_analytics_workspace_id    = optional(string)
+  log_analytics_workspace_id     = optional(string)
   eventhub_authorization_rule_id = optional(string)
-  storage_account_id            = optional(string)
-  enabled_log_categories        = optional(list(string), [])
-  enabled_metric_categories     = optional(list(string), ["AllMetrics"])
+  storage_account_id             = optional(string)
 })
 ```
 
-**Example:**
+**Example (Basic Logging to Log Analytics):**
 ```hcl
+diagnostics_level = "basic"
 diagnostic_settings = {
-  name                       = "diag-avd-scaling-plan"
   log_analytics_workspace_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-logging-rg/providers/Microsoft.OperationalInsights/workspaces/my-log-analytics"
-  enabled_log_categories     = ["ScalingPlanPooledHostUsage"]
-  enabled_metric_categories  = ["AllMetrics"]
 }
+```
+
+**Example (Custom Logging to Storage Account):**
+```hcl
+diagnostics_level = "custom"
+diagnostic_settings = {
+  storage_account_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-storage-rg/providers/Microsoft.Storage/storageAccounts/mystoracc"
+}
+diagnostics_custom_logs = ["Autoscale"]
+# No metrics are available for this resource
+diagnostics_custom_metrics = []
 ```
 
 ---

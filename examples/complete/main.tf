@@ -99,15 +99,13 @@ module "scaling_plan_complete" {
     }
   }
 
+  # Configure custom diagnostics to send specific logs to the Log Analytics Workspace.
+  diagnostics_level = "custom"
   diagnostic_settings = {
     log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
-    enabled_log_categories = [
-      "ScalingPlanPooledHostPoolSchedule",
-      "ScalingPlanPersonalHostPoolSchedule",
-      "ScalingPlanVMMetrics"
-    ]
-    enabled_metric_categories = ["AllMetrics"]
   }
+  diagnostics_custom_logs = ["Autoscale"]
+  # No metrics are available for this resource, so diagnostics_custom_metrics is omitted.
 
   role_assignments = {
     avd_contributor = {

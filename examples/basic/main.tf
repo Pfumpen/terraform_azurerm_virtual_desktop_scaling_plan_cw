@@ -18,6 +18,15 @@ resource "azurerm_virtual_desktop_host_pool" "example" {
   load_balancer_type  = "BreadthFirst"
 }
 
+# Create a Log Analytics Workspace to receive diagnostics
+resource "azurerm_log_analytics_workspace" "this" {
+  name                = "log-avd-scaling-plan-basic"
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
+
 module "scaling_plan" {
   source = "../.."
 
@@ -53,6 +62,12 @@ module "scaling_plan" {
       host_pool_id = azurerm_virtual_desktop_host_pool.example.id
       enabled      = true
     }
+  }
+
+  # Configure basic diagnostics to send logs to the created Log Analytics Workspace.
+  diagnostics_level = "basic"
+  diagnostic_settings = {
+    log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
   }
 
   tags = {
