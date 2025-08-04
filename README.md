@@ -54,10 +54,10 @@ This module relies on the following external resources, which you must provide v
 | `tags`                | A map of tags to apply to the scaling plan resource.                                                    | `map(string)` | `{}`    | no       |
 | `schedules`           | A map of schedule configurations for the scaling plan (see structure below).                            | `map(object)` | n/a     | yes      |
 | `host_pool_associations` | A map to associate host pools with this scaling plan (see structure below).                            | `map(object)` | `{}`    | no       |
-| `diagnostics_level` | Defines the detail level for diagnostics. Possible values: 'none', 'basic', 'custom'. | `string` | `"basic"` | no |
+| `diagnostics_level` | Defines the desired diagnostic intent. 'all' and 'audit' are dynamically mapped to available categories. Possible values: 'none', 'all', 'audit', 'custom'. | `string` | `"none"` | no |
 | `diagnostic_settings` | A map containing the destination IDs for diagnostic settings. When diagnostics are enabled, exactly one destination must be specified. | `object` | `{}` | no |
-| `diagnostics_custom_logs` | A list of log categories to enable when `diagnostics_level` is 'custom'. | `list(string)` | `[]` | no |
-| `diagnostics_custom_metrics` | A list of metric categories to enable when `diagnostics_level` is 'custom'. | `list(string)` | `[]` | no |
+| `diagnostics_custom_logs` | A list of specific log categories to enable when `diagnostics_level` is 'custom'. | `list(string)` | `[]` | no |
+| `diagnostics_custom_metrics` | A list of specific metric categories to enable. Use `["AllMetrics"]` for all. | `list(string)` | `["AllMetrics"]` | no |
 | `role_assignments`    | A map of role assignments to create on the scaling plan's scope (see structure below).                  | `map(object)` | `{}`    | no       |
 
 ---
@@ -142,12 +142,15 @@ host_pool_associations = {
 
 ### `diagnostic_settings`
 
-This variable configures the destination for diagnostic logs. It follows a structured pattern where you define the level of diagnostics and then provide exactly one destination.
+This module implements an advanced, self-adapting pattern for configuring diagnostic settings. The configuration is driven by an **intent** (`diagnostics_level`) which is dynamically translated into a concrete configuration based on the actual categories supported by the Azure resource at runtime. This eliminates configuration errors and the need for manual research.
 
 **`diagnostics_level`:**
-*   **`none`**: (Default) Disables diagnostic settings.
-*   **`basic`**: Enables a predefined set of logs (`Autoscale`) and sends them to the specified destination.
-*   **`custom`**: Enables logs and metrics specified in the `diagnostics_custom_logs` and `diagnostics_custom_metrics` variables.
+*   **`none`**: (Default) Disables diagnostic settings entirely.
+*   **`all`**: Enables **all** supported log and metric categories. The module discovers all available categories for the specific resource and enables them. For logs, it will preferentially use the `allLogs` category group if available, otherwise it will enable every individual log category.
+*   **`audit`**: Enables the `audit` log category group, if supported by the resource.
+*   **`custom`**: Enables only the specific log and metric categories provided in the `diagnostics_custom_logs` and `diagnostics_custom_metrics` variables.
+
+When `diagnostics_level` is set to anything other than `none`, you must provide exactly one destination in the `diagnostic_settings` object.
 
 **`diagnostic_settings` object Type:**
 ```hcl
@@ -158,9 +161,9 @@ object({
 })
 ```
 
-**Example (Basic Logging to Log Analytics):**
+**Example (Enable All Diagnostics to Log Analytics):**
 ```hcl
-diagnostics_level = "basic"
+diagnostics_level = "all"
 diagnostic_settings = {
   log_analytics_workspace_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-logging-rg/providers/Microsoft.OperationalInsights/workspaces/my-log-analytics"
 }
@@ -172,9 +175,8 @@ diagnostics_level = "custom"
 diagnostic_settings = {
   storage_account_id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-storage-rg/providers/Microsoft.Storage/storageAccounts/mystoracc"
 }
-diagnostics_custom_logs = ["Autoscale"]
-# No metrics are available for this resource
-diagnostics_custom_metrics = []
+diagnostics_custom_logs    = ["Autoscale", "Checkpoint"] # Example categories
+diagnostics_custom_metrics = ["AllMetrics"]
 ```
 
 ---
@@ -221,39 +223,46 @@ role_assignments = {
 This example shows how to create a minimal scaling plan. You can find the full code in the `examples/basic` directory.
 
 ```hcl
-module "avd_scaling_plan_basic" {
-  source = "git::https/github.com/Pfumpen/terraform_azurerm_virtual_desktop_scaling_plan_cw.git"
+module "scaling_plan" {
+  source = "../.."
 
-  name                = "avdsp-basic-example"
-  resource_group_name = "rg-avd-resources"
-  location            = "westeurope"
+  name                = "sp-avd-basic-example"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
   time_zone           = "W. Europe Standard Time"
 
   schedules = {
-    "default" = {
+    weekdays = {
       days_of_week                       = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-      ramp_up_start_time                 = "07:00"
+      ramp_up_start_time                 = "06:00"
       ramp_up_load_balancing_algorithm   = "BreadthFirst"
       ramp_up_minimum_hosts_percent      = 10
-      ramp_up_capacity_threshold_percent = 85
+      ramp_up_capacity_threshold_percent = 80
       peak_start_time                    = "09:00"
       peak_load_balancing_algorithm      = "BreadthFirst"
-      ramp_down_start_time               = "17:00"
+      ramp_down_start_time               = "18:00"
       ramp_down_load_balancing_algorithm = "BreadthFirst"
       ramp_down_minimum_hosts_percent    = 5
-      ramp_down_capacity_threshold_percent = 90
+      ramp_down_capacity_threshold_percent = 50
       ramp_down_force_logoff_users       = true
-      ramp_down_wait_time_minutes        = 15
-      ramp_down_notification_message     = "Please save your work."
+      ramp_down_wait_time_minutes        = 30
+      ramp_down_notification_message     = "Please save your work. You will be logged off in 30 minutes."
       ramp_down_stop_hosts_when          = "ZeroSessions"
-      off_peak_start_time                = "20:00"
+      off_peak_start_time                = "22:00"
       off_peak_load_balancing_algorithm  = "BreadthFirst"
     }
   }
 
+  host_pool_associations = {
+    main_pool = {
+      host_pool_id = azurerm_virtual_desktop_host_pool.example.id
+      enabled      = true
+    }
+  }
+
   tags = {
-    environment = "production"
-    cost_center = "IT-123"
+    environment = "example"
+    cost_center = "it"
   }
 }
 ```

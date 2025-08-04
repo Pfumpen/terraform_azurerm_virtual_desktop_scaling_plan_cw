@@ -212,12 +212,12 @@ variable "host_pool_associations" {
 #------------------------------------------------------------------------------
 
 variable "diagnostics_level" {
-  description = "Defines the detail level for diagnostics. Possible values: 'none', 'basic', 'custom'."
+  description = "Defines the desired diagnostic intent. 'all' and 'audit' are dynamically mapped to available categories. Possible values: 'none', 'all', 'audit', 'custom'."
   type        = string
-  default     = "basic"
+  default     = "none"
   validation {
-    condition     = contains(["none", "basic", "custom"], var.diagnostics_level)
-    error_message = "Valid values for diagnostics_level are 'none', 'basic', or 'custom'."
+    condition     = contains(["none", "all", "audit", "custom"], var.diagnostics_level)
+    error_message = "Valid values for diagnostics_level are 'none', 'all', 'audit', or 'custom'."
   }
 }
 
@@ -231,7 +231,6 @@ variable "diagnostic_settings" {
   default = {}
 
   validation {
-    # This rule ensures that if diagnostics are enabled, the user provides exactly one valid destination.
     condition = var.diagnostics_level == "none" || (
       (try(var.diagnostic_settings.log_analytics_workspace_id, null) != null ? 1 : 0) +
       (try(var.diagnostic_settings.eventhub_authorization_rule_id, null) != null ? 1 : 0) +
@@ -248,9 +247,9 @@ variable "diagnostics_custom_logs" {
 }
 
 variable "diagnostics_custom_metrics" {
-  description = "A list of metric categories to enable when diagnostics_level is 'custom'. Use ['AllMetrics'] for all."
+  description = "A list of specific metric categories to enable. Use ['AllMetrics'] for all."
   type        = list(string)
-  default     = []
+  default     = ["AllMetrics"]
 }
 
 #------------------------------------------------------------------------------
