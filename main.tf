@@ -3,7 +3,7 @@ locals {
   tags = merge(
     var.tags,
     {
-      "module_name" = "terraform-azurerm-virtual-desktop-scaling-plan"
+      "deployment" = "terraform"
     }
   )
 }
