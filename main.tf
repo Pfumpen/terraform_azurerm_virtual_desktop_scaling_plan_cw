@@ -44,5 +44,8 @@ resource "azurerm_virtual_desktop_scaling_plan" "this" {
 
   lifecycle {
     create_before_destroy = true
+    ignore_changes = [ 
+      tags, 
+    ]
   }
 }
