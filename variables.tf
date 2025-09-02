@@ -38,8 +38,6 @@ variable "description" {
 variable "time_zone" {
   type        = string
   description = "(Required) The IANA time zone name to be used by the scaling plan (e.g., 'W. Europe Standard Time')."
-  # A comprehensive regex for all IANA time zones is impractical.
-  # A simple check for structure is performed. The Azure API will perform the final validation.
   validation {
     condition     = can(regex("^[a-zA-Z_\\/\\s\\.\\(\\)-]+$", var.time_zone))
     error_message = "The time_zone must be a valid IANA time zone name."
@@ -64,23 +62,23 @@ variable "tags" {
 
 variable "schedules" {
   type = map(object({
-    days_of_week = list(string)
-    ramp_up_start_time = string
-    ramp_up_load_balancing_algorithm = string
-    ramp_up_minimum_hosts_percent = number
-    ramp_up_capacity_threshold_percent = number
-    peak_start_time = string
-    peak_load_balancing_algorithm = string
-    ramp_down_start_time = string
-    ramp_down_load_balancing_algorithm = string
-    ramp_down_minimum_hosts_percent = number
+    days_of_week                         = list(string)
+    ramp_up_start_time                   = string
+    ramp_up_load_balancing_algorithm     = string
+    ramp_up_minimum_hosts_percent        = number
+    ramp_up_capacity_threshold_percent   = number
+    peak_start_time                      = string
+    peak_load_balancing_algorithm        = string
+    ramp_down_start_time                 = string
+    ramp_down_load_balancing_algorithm   = string
+    ramp_down_minimum_hosts_percent      = number
     ramp_down_capacity_threshold_percent = number
-    ramp_down_force_logoff_users = bool
-    ramp_down_wait_time_minutes = number
-    ramp_down_notification_message = string
-    ramp_down_stop_hosts_when = string
-    off_peak_start_time = string
-    off_peak_load_balancing_algorithm = string
+    ramp_down_force_logoff_users         = bool
+    ramp_down_wait_time_minutes          = number
+    ramp_down_notification_message       = string
+    ramp_down_stop_hosts_when            = string
+    off_peak_start_time                  = string
+    off_peak_load_balancing_algorithm    = string
   }))
   description = "(Required) A map of schedule configurations for the scaling plan. The map key is a logical name for the schedule (e.g., 'weekdays')."
 
